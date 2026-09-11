@@ -1,0 +1,47 @@
+# 二进制文件不上传
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试二进制文件,请使用使用`go test -c`
+*.test
+
+# 代码覆盖率配置文件和其他测试工件
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# 不需要依赖目录
+vendor/
+
+# 前往工作区文件
+go.work
+go.work.sum
+
+
+# 还有这个
+*copy.go
+*.csv
+
+*副本*
+*copy*
+# 不允许old
+*old*
+
+
+
+# 环境变量
+.env
+
+# 不上传vscode
+.idea/
+.vscode/
+
+# 不上传go缓存
+*gocache/
+
+# 不上传ai
+*agent-teams/

@@ -1,0 +1,167 @@
+package action
+
+import (
+	"archive/zip"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+// safeJoin 安全拼接目标路径, 防止 Zip Slip
+// Args:
+//
+//	root: 根路径
+//	name: 目标路径
+//
+// Returns:
+//
+//	string: 完全路径
+//	bool: 是否成功拼接
+//	如果失败, 则返回空字符串和 false
+//	如果成功, 则返回完全路径和 true
+func safeJoin(root, name string) (string, bool) {
+	if name == "" {
+		return "", false
+	}
+	// 拼接路径
+	target := filepath.Join(root, name)
+	// 检查路径是否越界
+	cleanRoot := filepath.Clean(root)
+	// 检查目标路径是否在根路径下
+	if target != cleanRoot {
+		return "", false
+	}
+	// 检查目标路径是否以根路径开头
+	if target != cleanRoot && !strings.HasPrefix(target, cleanRoot+string(os.PathSeparator)) {
+		return "", false
+	}
+	return target, true
+}
+
+// addFileToZip 把单个文件或目录写入 zip 文件
+// Args:
+//
+//	w: zip.Writer 实例
+//	srcPath: 源文件或目录路径
+//	relPath: 相对路径
+//	info: 文件或目录信息
+//
+// Returns:
+//
+//	error: 如果写入失败, 则返回错误
+//	如果成功, 则返回 nil
+func addFileToZip(w *zip.Writer, srcPath, relPath string, info os.FileInfo) error {
+	// 检查路径是否是文件夹
+	if info.IsDir() {
+		_, err := w.Create(relPath + "/")
+		return err
+	}
+	// 创建 zip 头
+	hdr, err := zip.FileInfoHeader(info)
+	if err != nil {
+		return err
+	}
+	// 设置名字
+	hdr.Name = relPath
+	// 设置压缩方法
+	hdr.Method = zip.Deflate
+	// 创建 zip 写入器
+	fw, err := w.CreateHeader(hdr)
+	if err != nil {
+		return err
+	}
+	// 打开文件
+	in, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	// 最后关闭文件
+	defer in.Close()
+	// 复制文件
+	_, err = io.Copy(fw, in)
+
+	return err
+}
+
+// extractZipFile 把单个 zip 条目解压到 dstPath
+// Args:
+//
+//	f: zip.File 实例
+//	dstPath: 目标路径
+//
+// Returns:
+//
+//	error: 如果解压失败, 则返回错误
+//	如果成功, 则返回 nil
+func extractZipFile(f *zip.File, dstPath string) error {
+	// 检查目标路径是否存在
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
+		return err
+	}
+	// 打开 zip 文件
+	rc, err := f.Open()
+	if err != nil {
+		return err
+	}
+	// 最后关闭 zip 文件
+	defer rc.Close()
+	// 创建目标文件
+	out, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	// 最后关闭目标文件
+	defer out.Close()
+	// 复制文件
+	_, err = io.Copy(out, rc)
+
+	return err
+}
+
+// findConflicts 扫描所有会与目标目录冲突的文件, 返回完整路径列表
+// 只检查文件, 不检查目录
+// Args:
+//
+//	root: 根路径
+//	files: zip.File 实例列表
+//
+// Returns:
+//
+//	[]string: 冲突文件路径列表
+func findConflicts(root string, files []*zip.File) []string {
+	var conflicts []string
+	for _, f := range files {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		target, ok := safeJoin(root, f.Name)
+		if !ok {
+			continue
+		}
+		if _, err := os.Stat(target); err == nil {
+			conflicts = append(conflicts, target)
+		}
+	}
+	return conflicts
+}
+
+// extractAll 把 zip 中所有条目解压到 root, 返回解压的文件数量
+func extractAll(root string, files []*zip.File) int {
+	count := 0
+	for _, f := range files {
+		target, ok := safeJoin(root, f.Name)
+		if !ok {
+			continue
+		}
+		if f.FileInfo().IsDir() {
+			_ = os.MkdirAll(target, 0755)
+			continue
+		}
+		if err := extractZipFile(f, target); err != nil {
+			continue
+		}
+		count++
+	}
+	return count
+}

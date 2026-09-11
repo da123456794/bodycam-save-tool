@@ -1,0 +1,65 @@
+{
+  "通用.提示": "Select: ",
+  "通用.按Enter继续": "Press Enter to continue...",
+  "通用.无效选项": "[x] Invalid option, try again",
+  "通用.返回": "b. Back",
+  "通用.退出": "q. Quit",
+
+  "主菜单.标题": "========== Bodycam Save Tool ==========",
+  "主菜单.备份": "1. Backup Bodycam Save",
+  "主菜单.加载": "2. Restore Bodycam Save",
+  "主菜单.打开游戏文件夹": "3. Open Game Folder",
+  "主菜单.设置": "4. Settings",
+
+  "设置菜单.标题": "========== Settings ==========",
+  "设置菜单.语言": "1. Language",
+  "设置菜单.游戏路径": "2. Game Install Path",
+  "设置菜单.数据路径": "3. Game Data Folder Path",
+  "设置菜单.恢复默认": "4. Reset All To Default",
+
+  "语言菜单.标题": "========== Language ==========",
+  "语言菜单.当前语言": "Current language: %s",
+  "语言菜单.中文": "1. Chinese",
+  "语言菜单.英文": "2. English",
+  "语言菜单.中文名": "Chinese",
+  "语言菜单.英文名": "English",
+  "语言菜单.已切换": "[OK] Language switched to: %s",
+
+  "游戏路径菜单.标题": "========== Game Install Path ==========",
+  "游戏路径菜单.当前路径": "Current game install path: %s",
+  "游戏路径菜单.输入提示": "Enter new game install path (Enter to keep): ",
+  "游戏路径菜单.已更新": "[OK] Game install path updated to: %s",
+
+  "数据路径菜单.标题": "========== Game Data Folder Path ==========",
+  "数据路径菜单.当前路径": "Current game data folder path: %s",
+  "数据路径菜单.输入提示": "Enter new data folder path (Enter to keep, d to reset): ",
+  "数据路径菜单.已更新": "[OK] Game data folder path updated to: %s",
+  "数据路径菜单.已恢复默认": "[OK] Reset to default data folder path: %s",
+
+  "恢复默认菜单.标题": "========== Reset All To Default ==========",
+  "恢复默认菜单.确认": "Reset all settings to default? This will reset language, game install path and data folder path (y/N): ",
+  "恢复默认菜单.已取消": "[x] Reset cancelled",
+  "恢复默认菜单.已完成": "[OK] All settings reset to default",
+  "恢复默认菜单.当前语言": "  Current language: %s",
+  "恢复默认菜单.当前游戏路径": "  Current game install path: %s",
+  "恢复默认菜单.当前数据路径": "  Current data folder path: %s",
+
+  "备份.存档目录不存在": "[x] Save folder not found: %s",
+  "备份.创建压缩包失败": "[x] Failed to create zip: %v",
+  "备份.压缩失败": "[x] Zip failed: %v",
+  "备份.完成": "[OK] Backup complete!",
+  "备份.来源": "  Source: %s",
+  "备份.文件": "  File: %s (%d files)",
+
+  "恢复.打不开压缩包": "[x] Cannot open zip: %s\n  Please backup first",
+  "恢复.创建目录失败": "[x] Failed to create folder: %v",
+  "恢复.发现冲突": "[x] Found %d conflicting files:",
+  "恢复.询问覆盖": "Overwrite all? (y/N): ",
+  "恢复.已取消": "[x] Restore cancelled",
+  "恢复.完成": "[OK] Restore complete!",
+  "恢复.文件": "  File: %s",
+  "恢复.目标": "  Target: %s (%d files)",
+
+  "打开文件夹.游戏路径": "Game path: %s",
+  "打开文件夹.失败": "[x] Failed to open explorer: %v"
+}
