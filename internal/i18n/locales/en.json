@@ -45,6 +45,7 @@
   "备份.创建压缩包失败": "[x] Failed to create zip: %v",
   "备份.压缩失败": "[x] Zip failed: %v",
   "备份.跳过文件": "[!] Skipped %s: %v",
+  "备份.跳过汇总": "[!] Skipped %d file(s)/folder(s)",
   "备份.完成": "[OK] Backup complete!",
   "备份.来源": "  Source: %s",
   "备份.文件": "  File: %s (%d files)",
@@ -54,10 +55,14 @@
   "恢复.发现冲突": "[x] Found %d conflicting files:",
   "恢复.询问覆盖": "Overwrite all? (y/N): ",
   "恢复.已取消": "[x] Restore cancelled",
+  "恢复.路径越界": "path traversal, skipped",
   "恢复.完成": "[OK] Restore complete!",
   "恢复.文件": "  File: %s",
   "恢复.目标": "  Target: %s (%d files)",
+  "恢复.失败列表": "[x] %d file(s) failed to extract:",
 
   "打开文件夹.游戏路径": "Game path: %s",
+  "打开文件夹.路径不存在": "[x] Path not found or not accessible: %s",
+  "打开文件夹.路径为空警告": "[!] Path exists but is empty, may not be a valid game folder: %s",
   "打开文件夹.失败": "[x] Failed to open explorer: %v"
 }
