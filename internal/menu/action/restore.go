@@ -41,11 +41,20 @@ func Restore(overwrite bool) {
 	}
 
 	// 执行解压
-	count := extractAll(dst, r.File)
+	count, failed := extractAll(dst, r.File)
 
 	fmt.Println(i18n.T("恢复.完成"))
 	fmt.Println(i18n.Tf("恢复.文件", z))
 	fmt.Println(i18n.Tf("恢复.目标", dst, count))
+
+	// 有失败的文件, 列出全部
+	if len(failed) > 0 {
+		fmt.Println(i18n.Tf("恢复.失败列表", len(failed)))
+		for _, s := range failed {
+			fmt.Println("  " + s)
+		}
+	}
+
 }
 
 // HasConflict 检查 zip 包解压时是否会与目标目录冲突
