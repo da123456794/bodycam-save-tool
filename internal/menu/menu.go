@@ -72,7 +72,7 @@ func Run() {
 // ========== 备份菜单 ==========
 
 // backupMenu 备份菜单
-// 除了三个备份动作, 还承担备份文件名设置
+// 三个备份动作
 func backupMenu() {
 	for {
 		fmt.Println()
@@ -80,9 +80,6 @@ func backupMenu() {
 		fmt.Println(i18n.T("备份菜单.数据"))
 		fmt.Println(i18n.T("备份菜单.存档"))
 		fmt.Println(i18n.T("备份菜单.配置"))
-		fmt.Println(i18n.T("备份菜单.设置数据名"))
-		fmt.Println(i18n.T("备份菜单.设置存档名"))
-		fmt.Println(i18n.T("备份菜单.设置配置名"))
 		fmt.Println(i18n.T("通用.返回"))
 		fmt.Println(i18n.T("通用.退出"))
 		fmt.Print(i18n.T("通用.提示"))
@@ -101,15 +98,6 @@ func backupMenu() {
 		case "3":
 			action.BackupWindowsConfig()
 			pause()
-		case "4":
-			dataBackupNameMenu()
-			pause()
-		case "5":
-			saveGamesBackupNameMenu()
-			pause()
-		case "6":
-			windowsConfigBackupNameMenu()
-			pause()
 		case "b", "B":
 			return
 		case "q", "Q":
@@ -123,7 +111,7 @@ func backupMenu() {
 // ========== 加载菜单 ==========
 
 // restoreMenu 加载菜单
-// 除了三个加载动作, 还承担三个目标路径的设置
+// 三个加载动作
 func restoreMenu() {
 	for {
 		fmt.Println()
@@ -131,9 +119,6 @@ func restoreMenu() {
 		fmt.Println(i18n.T("加载菜单.数据"))
 		fmt.Println(i18n.T("加载菜单.存档"))
 		fmt.Println(i18n.T("加载菜单.配置"))
-		fmt.Println(i18n.T("加载菜单.设置数据路径"))
-		fmt.Println(i18n.T("加载菜单.设置存档路径"))
-		fmt.Println(i18n.T("加载菜单.设置配置路径"))
 		fmt.Println(i18n.T("通用.返回"))
 		fmt.Println(i18n.T("通用.退出"))
 		fmt.Print(i18n.T("通用.提示"))
@@ -151,15 +136,6 @@ func restoreMenu() {
 			pause()
 		case "3":
 			runRestore(action.WindowsConfigBackupPath(), config.WindowsConfigDir())
-			pause()
-		case "4":
-			dataPathMenu()
-			pause()
-		case "5":
-			saveGamesPathMenu()
-			pause()
-		case "6":
-			windowsConfigPathMenu()
 			pause()
 		case "b", "B":
 			return
@@ -210,7 +186,6 @@ func openFolderMenu() {
 		fmt.Println()
 		fmt.Println(i18n.T("打开文件夹菜单.标题"))
 		fmt.Println(i18n.T("打开文件夹菜单.打开"))
-		fmt.Println(i18n.T("打开文件夹菜单.设置路径"))
 		fmt.Println(i18n.T("通用.返回"))
 		fmt.Println(i18n.T("通用.退出"))
 		fmt.Print(i18n.T("通用.提示"))
@@ -222,9 +197,6 @@ func openFolderMenu() {
 		switch line {
 		case "1":
 			action.OpenGameFolder()
-			pause()
-		case "2":
-			gamePathMenu()
 			pause()
 		case "b", "B":
 			return
@@ -239,12 +211,14 @@ func openFolderMenu() {
 // ========== 设置菜单 ==========
 
 // settingsMenu 设置菜单
-// 只保留语言与恢复默认, 路径和备份文件名都挪到对应菜单
+// 集中所有设置
 func settingsMenu() {
 	for {
 		fmt.Println()
 		fmt.Println(i18n.T("设置菜单.标题"))
 		fmt.Println(i18n.T("设置菜单.语言"))
+		fmt.Println(i18n.T("设置菜单.路径"))
+		fmt.Println(i18n.T("设置菜单.备份名"))
 		fmt.Println(i18n.T("设置菜单.恢复默认"))
 		fmt.Println(i18n.T("通用.返回"))
 		fmt.Println(i18n.T("通用.退出"))
@@ -258,7 +232,87 @@ func settingsMenu() {
 		case "1":
 			languageMenu()
 		case "2":
+			pathSettingsMenu()
+		case "3":
+			backupNameSettingsMenu()
+		case "4":
 			resetMenu()
+			pause()
+		case "b", "B":
+			return
+		case "q", "Q":
+			os.Exit(0)
+		default:
+			fmt.Println(i18n.T("通用.无效选项"))
+		}
+	}
+}
+
+// pathSettingsMenu 路径设置菜单
+func pathSettingsMenu() {
+	for {
+		fmt.Println()
+		fmt.Println(i18n.T("路径设置菜单.标题"))
+		fmt.Println(i18n.T("路径设置菜单.游戏路径"))
+		fmt.Println(i18n.T("路径设置菜单.数据路径"))
+		fmt.Println(i18n.T("路径设置菜单.存档路径"))
+		fmt.Println(i18n.T("路径设置菜单.配置路径"))
+		fmt.Println(i18n.T("通用.返回"))
+		fmt.Println(i18n.T("通用.退出"))
+		fmt.Print(i18n.T("通用.提示"))
+
+		line, ok := readLine()
+		if !ok {
+			return
+		}
+		switch line {
+		case "1":
+			gamePathMenu()
+			pause()
+		case "2":
+			dataPathMenu()
+			pause()
+		case "3":
+			saveGamesPathMenu()
+			pause()
+		case "4":
+			windowsConfigPathMenu()
+			pause()
+		case "b", "B":
+			return
+		case "q", "Q":
+			os.Exit(0)
+		default:
+			fmt.Println(i18n.T("通用.无效选项"))
+		}
+	}
+}
+
+// backupNameSettingsMenu 备份文件名设置菜单
+func backupNameSettingsMenu() {
+	for {
+		fmt.Println()
+		fmt.Println(i18n.T("备份名设置菜单.标题"))
+		fmt.Println(i18n.T("备份名设置菜单.数据名"))
+		fmt.Println(i18n.T("备份名设置菜单.存档名"))
+		fmt.Println(i18n.T("备份名设置菜单.配置名"))
+		fmt.Println(i18n.T("通用.返回"))
+		fmt.Println(i18n.T("通用.退出"))
+		fmt.Print(i18n.T("通用.提示"))
+
+		line, ok := readLine()
+		if !ok {
+			return
+		}
+		switch line {
+		case "1":
+			dataBackupNameMenu()
+			pause()
+		case "2":
+			saveGamesBackupNameMenu()
+			pause()
+		case "3":
+			windowsConfigBackupNameMenu()
 			pause()
 		case "b", "B":
 			return
