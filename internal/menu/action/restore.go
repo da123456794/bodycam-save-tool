@@ -34,10 +34,13 @@ func Restore(overwrite bool) {
 	}
 
 	// 冲突预检
-	conflicts := findConflicts(dst, r.File)
-	if len(conflicts) > 0 && !overwrite {
-		fmt.Println(i18n.T("恢复.已取消"))
-		return
+	// 只有不允许覆盖时, 才需要检查冲突
+	if !overwrite {
+		conflicts := findConflicts(dst, r.File)
+		if len(conflicts) > 0 {
+			fmt.Println(i18n.T("恢复.已取消"))
+			return
+		}
 	}
 
 	// 执行解压
