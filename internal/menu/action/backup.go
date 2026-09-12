@@ -18,6 +18,7 @@ func Backup() {
 		fmt.Println(i18n.Tf("备份.存档目录不存在", src))
 		return
 	}
+
 	// 创建压缩包
 	out := ZipPath()
 	f, err := os.Create(out)
@@ -28,12 +29,18 @@ func Backup() {
 
 	// 创建 zip 写入器
 	w := zip.NewWriter(f)
+	// 统计压缩的文件数量
 	count := 0
+	// 统计跳过的文件数量
+	skipped := 0
+
 	// 遍历数据目录下的所有文件
 	err = filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 		// 遇到没权限等错误, 跳过但继续
 		if err != nil {
 			fmt.Println(i18n.Tf("备份.跳过文件", path, err))
+			// 加1
+			skipped++
 			return nil
 		}
 		if path == src {
@@ -81,4 +88,9 @@ func Backup() {
 	fmt.Println(i18n.T("备份.完成"))
 	fmt.Println(i18n.Tf("备份.来源", src))
 	fmt.Println(i18n.Tf("备份.文件", out, count))
+
+	// 有跳过的文件, 汇总提示
+	if skipped > 0 {
+		fmt.Println(i18n.Tf("备份.跳过汇总", skipped))
+	}
 }
