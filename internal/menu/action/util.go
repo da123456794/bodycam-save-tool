@@ -2,11 +2,12 @@ package action
 
 import (
 	"archive/zip"
-	"bodycam-save-tool/internal/i18n"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"bodycam-save-tool/internal/i18n"
 )
 
 // safeJoin 安全拼接目标路径, 防止 Zip Slip
@@ -82,6 +83,7 @@ func addFileToZip(w *zip.Writer, srcPath, relPath string, info os.FileInfo) erro
 }
 
 // extractZipFile 把单个 zip 条目解压到 dstPath
+// 先写到 dstPath + ".tmp", 成功后再重命名覆盖, 避免中途失败留下半个文件
 // Args:
 //
 //	f: zip.File 实例
@@ -96,6 +98,7 @@ func extractZipFile(f *zip.File, dstPath string) error {
 	if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
 		return err
 	}
+
 	// 打开 zip 文件
 	rc, err := f.Open()
 	if err != nil {
@@ -103,16 +106,41 @@ func extractZipFile(f *zip.File, dstPath string) error {
 	}
 	// 最后关闭 zip 文件
 	defer rc.Close()
-	// 创建目标文件
-	out, err := os.Create(dstPath)
+
+	// 写临时文件
+	tmpPath := dstPath + ".tmp"
+	out, err := os.Create(tmpPath)
 	if err != nil {
 		return err
 	}
-	// 最后关闭目标文件
-	defer out.Close()
-	// 复制文件
-	_, err = io.Copy(out, rc)
 
+	// 出错时清理临时文件
+	defer func() {
+		if err != nil {
+			_ = out.Close()
+			_ = os.Remove(tmpPath)
+		}
+	}()
+
+	// 复制文件
+	if _, err = io.Copy(out, rc); err != nil {
+		return err
+	}
+	if err = out.Close(); err != nil {
+		return err
+	}
+
+	// 重命名覆盖
+	err = os.Rename(tmpPath, dstPath)
+	if err == nil {
+		return nil
+	}
+
+	// Windows 上 rename 不能覆盖已存在的文件, 先删目标再 rename
+	removeErr := os.Remove(dstPath)
+	if removeErr == nil {
+		err = os.Rename(tmpPath, dstPath)
+	}
 	return err
 }
 
@@ -143,7 +171,7 @@ func findConflicts(root string, files []*zip.File) []string {
 	return conflicts
 }
 
-// extractAll 把 zip 中所有条目解压到 root, 返回解压的文件数量
+// extractAll 把 zip 中所有条目解压到 root
 // Args:
 //
 //	root: 根路径
@@ -162,7 +190,6 @@ func extractAll(root string, files []*zip.File) (int, []string) {
 			failed = append(failed, f.Name+": "+i18n.T("恢复.路径越界"))
 			continue
 		}
-		// 如果是目录, 则创建目录
 		if f.FileInfo().IsDir() {
 			if err := os.MkdirAll(target, 0755); err != nil {
 				failed = append(failed, target+": "+err.Error())
