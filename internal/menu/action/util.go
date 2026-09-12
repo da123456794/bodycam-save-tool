@@ -2,6 +2,7 @@ package action
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -151,12 +152,11 @@ func extractZipFile(f *zip.File, dstPath string) error {
 
 	// tmp 重命名为目标
 	if err := os.Rename(tmpPath, dstPath); err != nil {
-		// 恢复原文件
 		restoreErr := restoreBak(bakPath, dstPath, hasOld)
 		_ = os.Remove(tmpPath)
 		if restoreErr != nil {
-			// 恢复也失败, 原文件残留在 .bak, 提示用户
-			return err
+			// 恢复也失败, 原文件残留在 .bak
+			return fmt.Errorf("%w (原文件已备份到 %s)", err, bakPath)
 		}
 		return err
 	}
