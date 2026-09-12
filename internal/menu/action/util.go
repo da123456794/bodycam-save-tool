@@ -152,10 +152,12 @@ func extractZipFile(f *zip.File, dstPath string) error {
 	// tmp 重命名为目标
 	if err := os.Rename(tmpPath, dstPath); err != nil {
 		// 恢复原文件
-		if hasOld {
-			_ = os.Rename(bakPath, dstPath)
-		}
+		restoreErr := restoreBak(bakPath, dstPath, hasOld)
 		_ = os.Remove(tmpPath)
+		if restoreErr != nil {
+			// 恢复也失败, 原文件残留在 .bak, 提示用户
+			return err
+		}
 		return err
 	}
 
@@ -165,6 +167,38 @@ func extractZipFile(f *zip.File, dstPath string) error {
 	}
 
 	return nil
+}
+
+// restoreBak 把 .bak 恢复回 dstPath
+// 恢复前先删掉可能占位的 dstPath, 避免 Windows 上 rename 因目标存在而失败
+// Args:
+//
+//	bakPath: 备份路径
+//	dstPath: 目标路径
+//	hasOld: 是否存在原文件
+//
+// Returns:
+//
+//	error: 如果恢复失败, 则返回错误
+//	如果无需恢复或恢复成功, 则返回 nil
+func restoreBak(bakPath, dstPath string, hasOld bool) error {
+	if !hasOld {
+		return nil
+	}
+
+	// 先删掉可能占位的 dstPath
+	_ = os.Remove(dstPath)
+
+	// 尝试恢复
+	err := os.Rename(bakPath, dstPath)
+	if err == nil {
+		return nil
+	}
+
+	// 第一次失败, 重试一次
+	_ = os.Remove(dstPath)
+	err = os.Rename(bakPath, dstPath)
+	return err
 }
 
 // findConflicts 扫描所有会与目标目录冲突的文件, 返回完整路径列表
