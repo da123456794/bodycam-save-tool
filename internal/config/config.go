@@ -15,8 +15,14 @@ const DefaultLanguage = "zh"
 
 type Config struct {
 	Language string `json:"language"`
-	GamePath string `json:"game_path"` // 游戏本体路径
-	DataPath string `json:"data_path"` // 游戏数据文件夹路径, 空表示使用默认
+	// 游戏本体路径
+	GamePath string `json:"game_path"`
+	// 游戏数据文件夹路径, 空表示使用默认
+	DataPath string `json:"data_path"`
+	// 游戏存档文件夹路径, 空表示自数据文件夹
+	SaveGamesPath string `json:"save_games_path"`
+	// 游戏配置文件夹路径, 空表示自数据文件夹
+	WindowsConfigPath string `json:"windows_config_path"`
 }
 
 var current Config
@@ -86,6 +92,34 @@ func DataDir() string {
 	return defaultDataDir()
 }
 
+// defaultSaveGamesDir 返回的游戏存档文件夹路径
+func defaultSaveGamesDir() string {
+	return ToSlashPath(filepath.Join(DataDir(), "Saved", "SaveGames"))
+}
+
+// defaultWindowsConfigDir 返回的游戏配置文件夹路径
+func defaultWindowsConfigDir() string {
+	return ToSlashPath(filepath.Join(DataDir(), "Saved", "Config", "Windows"))
+}
+
+// SaveGamesDir 返回游戏存档文件夹路径
+// 若用户自定义过, 返回自定义路径; 否则返回路径
+func SaveGamesDir() string {
+	if strings.TrimSpace(current.SaveGamesPath) != "" {
+		return current.SaveGamesPath
+	}
+	return defaultSaveGamesDir()
+}
+
+// WindowsConfigDir 返回游戏配置文件夹路径
+// 若用户自定义过, 返回自定义路径; 否则返回默认路径
+func WindowsConfigDir() string {
+	if strings.TrimSpace(current.WindowsConfigPath) != "" {
+		return current.WindowsConfigPath
+	}
+	return defaultWindowsConfigDir()
+}
+
 // GameDir 返回游戏本体路径
 // Returns:
 //
@@ -97,12 +131,11 @@ func GameDir() string {
 // Load 加载配置
 func Load() Config {
 	current = Config{
-		// 语言默认值
-		Language: DefaultLanguage,
-		// 游戏本体路径默认值
-		GamePath: ToSlashPath(DefaultGamePath),
-		// 游戏数据文件夹路径默认值
-		DataPath: "",
+		Language:          DefaultLanguage,
+		GamePath:          ToSlashPath(DefaultGamePath),
+		DataPath:          "",
+		SaveGamesPath:     "",
+		WindowsConfigPath: "",
 	}
 	if data, err := os.ReadFile(filePath()); err == nil {
 		_ = json.Unmarshal(data, &current)
@@ -110,8 +143,10 @@ func Load() Config {
 	// 统一路径格式
 	current.GamePath = ToSlashPath(current.GamePath)
 	current.DataPath = ToSlashPath(current.DataPath)
+	current.SaveGamesPath = ToSlashPath(current.SaveGamesPath)
+	current.WindowsConfigPath = ToSlashPath(current.WindowsConfigPath)
 
-	// 语言只做非空校验, 具体是否支持由 i18n 决定
+	// 语言只做非空校验
 	if strings.TrimSpace(current.Language) == "" {
 		current.Language = DefaultLanguage
 	}
@@ -156,15 +191,31 @@ func SetDataPath(p string) {
 	save()
 }
 
+// SetSaveGamesPath 设置游戏存档文件夹路径
+// 传空字符串表示恢复默认
+func SetSaveGamesPath(p string) {
+	current.SaveGamesPath = ToSlashPath(p)
+	save()
+}
+
+// SetWindowsConfigPath 设置游戏配置文件夹路径
+// 传空字符串表示恢复默认
+func SetWindowsConfigPath(p string) {
+	current.WindowsConfigPath = ToSlashPath(p)
+	save()
+}
+
 // Reset 恢复全部默认设置
 // Returns:
 //
 //	Config: 新的配置
 func Reset() Config {
 	current = Config{
-		Language: DefaultLanguage,
-		GamePath: ToSlashPath(DefaultGamePath),
-		DataPath: "",
+		Language:          DefaultLanguage,
+		GamePath:          ToSlashPath(DefaultGamePath),
+		DataPath:          "",
+		SaveGamesPath:     "",
+		WindowsConfigPath: "",
 	}
 	save()
 	return current
