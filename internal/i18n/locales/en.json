@@ -4,6 +4,7 @@
   "通用.无效选项": "[x] Invalid option, try again",
   "通用.返回": "b. Back",
   "通用.退出": "q. Quit",
+  "通用.版本": "Version: %s",
 
   "主菜单.标题": "========== Bodycam Save Tool ==========",
   "主菜单.备份": "1. Backup Bodycam Save",
