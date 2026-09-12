@@ -19,10 +19,6 @@
 
   "语言菜单.标题": "========== Language ==========",
   "语言菜单.当前语言": "Current language: %s",
-  "语言菜单.中文": "1. Chinese",
-  "语言菜单.英文": "2. English",
-  "语言菜单.中文名": "Chinese",
-  "语言菜单.英文名": "English",
   "语言菜单.已切换": "[OK] Language switched to: %s",
 
   "游戏路径菜单.标题": "========== Game Install Path ==========",
@@ -47,6 +43,7 @@
   "备份.存档目录不存在": "[x] Save folder not found: %s",
   "备份.创建压缩包失败": "[x] Failed to create zip: %v",
   "备份.压缩失败": "[x] Zip failed: %v",
+  "备份.跳过文件": "[!] Skipped %s: %v",
   "备份.完成": "[OK] Backup complete!",
   "备份.来源": "  Source: %s",
   "备份.文件": "  File: %s (%d files)",
