@@ -80,6 +80,8 @@ func settingsMenu() {
 		fmt.Println(i18n.T("设置菜单.语言"))
 		fmt.Println(i18n.T("设置菜单.游戏路径"))
 		fmt.Println(i18n.T("设置菜单.数据路径"))
+		fmt.Println(i18n.T("设置菜单.存档路径"))
+		fmt.Println(i18n.T("设置菜单.配置路径"))
 		fmt.Println(i18n.T("设置菜单.恢复默认"))
 		fmt.Println(i18n.T("通用.返回"))
 		fmt.Println(i18n.T("通用.退出"))
@@ -99,6 +101,12 @@ func settingsMenu() {
 			dataPathMenu()
 			pause()
 		case "4":
+			saveGamesPathMenu()
+			pause()
+		case "5":
+			windowsConfigPathMenu()
+			pause()
+		case "6":
 			resetMenu()
 			pause()
 		case "b", "B":
@@ -208,6 +216,48 @@ func dataPathMenu() {
 	fmt.Println(i18n.Tf("数据路径菜单.已更新", line))
 }
 
+// saveGamesPathMenu 游戏存档文件夹路径设置菜单
+func saveGamesPathMenu() {
+	line, ok := promptPath(
+		"存档路径菜单.标题",
+		"存档路径菜单.当前路径",
+		"存档路径菜单.输入提示",
+		config.SaveGamesDir(),
+	)
+	if !ok || line == "" {
+		return
+	}
+	// 输入 d 或 default 恢复默认
+	if strings.EqualFold(line, "d") || strings.EqualFold(line, "default") {
+		config.SetSaveGamesPath("")
+		fmt.Println(i18n.Tf("存档路径菜单.已恢复默认", config.SaveGamesDir()))
+		return
+	}
+	config.SetSaveGamesPath(line)
+	fmt.Println(i18n.Tf("存档路径菜单.已更新", line))
+}
+
+// windowsConfigPathMenu 游戏配置文件夹路径设置菜单
+func windowsConfigPathMenu() {
+	line, ok := promptPath(
+		"配置路径菜单.标题",
+		"配置路径菜单.当前路径",
+		"配置路径菜单.输入提示",
+		config.WindowsConfigDir(),
+	)
+	if !ok || line == "" {
+		return
+	}
+	// 输入 d 或 default 恢复默认
+	if strings.EqualFold(line, "d") || strings.EqualFold(line, "default") {
+		config.SetWindowsConfigPath("")
+		fmt.Println(i18n.Tf("配置路径菜单.已恢复默认", config.WindowsConfigDir()))
+		return
+	}
+	config.SetWindowsConfigPath(line)
+	fmt.Println(i18n.Tf("配置路径菜单.已更新", line))
+}
+
 // resetMenu 恢复全部默认设置
 func resetMenu() {
 	fmt.Println()
@@ -234,6 +284,8 @@ func resetMenu() {
 	fmt.Println(i18n.Tf("恢复默认菜单.当前语言", i18n.DisplayName(config.Get().Language)))
 	fmt.Println(i18n.Tf("恢复默认菜单.当前游戏路径", config.GameDir()))
 	fmt.Println(i18n.Tf("恢复默认菜单.当前数据路径", config.DataDir()))
+	fmt.Println(i18n.Tf("恢复默认菜单.当前存档路径", config.SaveGamesDir()))
+	fmt.Println(i18n.Tf("恢复默认菜单.当前配置路径", config.WindowsConfigDir()))
 }
 
 // restoreMenu 处理恢复前的冲突询问
