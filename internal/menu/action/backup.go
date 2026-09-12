@@ -10,17 +10,14 @@ import (
 	"bodycam-save-tool/internal/i18n"
 )
 
-// Backup 把数据目录全部内容压缩到 exe 同目录
-func Backup() {
-	src := config.DataDir()
+// backupDir 把 src 目录全部内容压缩到 out 文件
+func backupDir(src, out string) {
 	fi, err := os.Stat(src)
 	if err != nil || !fi.IsDir() {
-		fmt.Println(i18n.Tf("备份.存档目录不存在", src))
+		fmt.Println(i18n.Tf("备份.源目录不存在", src))
 		return
 	}
 
-	// 创建压缩包
-	out := ZipPath()
 	f, err := os.Create(out)
 	if err != nil {
 		fmt.Println(i18n.Tf("备份.创建压缩包失败", err))
@@ -93,4 +90,19 @@ func Backup() {
 	if skipped > 0 {
 		fmt.Println(i18n.Tf("备份.跳过汇总", skipped))
 	}
+}
+
+// BackupData 备份游戏数据文件夹
+func BackupData() {
+	backupDir(config.DataDir(), DataBackupPath())
+}
+
+// BackupSaveGames 备份游戏存档文件夹
+func BackupSaveGames() {
+	backupDir(config.SaveGamesDir(), SaveGamesBackupPath())
+}
+
+// BackupWindowsConfig 备份游戏配置文件夹
+func BackupWindowsConfig() {
+	backupDir(config.WindowsConfigDir(), WindowsConfigBackupPath())
 }

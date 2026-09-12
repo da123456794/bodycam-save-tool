@@ -7,22 +7,38 @@ import (
 	"strings"
 )
 
-// DefaultGamePath 默认游戏本体路径
-const DefaultGamePath = `D:/SteamLibrary/steamapps/common/bodycam`
-
 // DefaultLanguage 默认语言
 const DefaultLanguage = "zh"
 
+// DefaultGamePath 默认游戏本体路径
+const DefaultGamePath = `D:/SteamLibrary/steamapps/common/bodycam`
+
+// 默认备份文件名
+const (
+	DefaultDataBackupName          = "bodycam_data.zip"
+	DefaultSaveGamesBackupName     = "bodycam_savegames.zip"
+	DefaultWindowsConfigBackupName = "bodycam_windows_config.zip"
+)
+
 type Config struct {
 	Language string `json:"language"`
+
 	// 游戏本体路径
 	GamePath string `json:"game_path"`
+
 	// 游戏数据文件夹路径, 空表示使用默认
 	DataPath string `json:"data_path"`
 	// 游戏存档文件夹路径, 空表示自数据文件夹
 	SaveGamesPath string `json:"save_games_path"`
 	// 游戏配置文件夹路径, 空表示自数据文件夹
 	WindowsConfigPath string `json:"windows_config_path"`
+
+	// 数据备份文件名, 空表示使用默认
+	DataBackupName string `json:"data_backup_name"`
+	// 存档备份文件名, 空表示使用默认
+	SaveGamesBackupName string `json:"save_games_backup_name"`
+	// 配置备份文件名, 空表示使用默认
+	WindowsConfigBackupName string `json:"windows_config_backup_name"`
 }
 
 var current Config
@@ -67,10 +83,19 @@ func ToSlashPath(p string) string {
 	return p
 }
 
-// defaultDataDir 返回默认的游戏数据目录
-// Returns:
-//
-//	string: 默认的游戏数据目录
+// sanitizeFileName 只保留文件名部分, 去掉任何目录分隔
+func sanitizeFileName(name string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ""
+	}
+	name = filepath.Base(name)
+	if name == "." || name == ".." {
+		return ""
+	}
+	return name
+}
+
 func defaultDataDir() string {
 	base := os.Getenv("LOCALAPPDATA")
 	if base == "" {
@@ -128,14 +153,41 @@ func GameDir() string {
 	return current.GamePath
 }
 
+// DataBackupName 返回数据备份文件名
+func DataBackupName() string {
+	if strings.TrimSpace(current.DataBackupName) != "" {
+		return current.DataBackupName
+	}
+	return DefaultDataBackupName
+}
+
+// SaveGamesBackupName 返回存档备份文件名
+func SaveGamesBackupName() string {
+	if strings.TrimSpace(current.SaveGamesBackupName) != "" {
+		return current.SaveGamesBackupName
+	}
+	return DefaultSaveGamesBackupName
+}
+
+// WindowsConfigBackupName 返回配置备份文件名
+func WindowsConfigBackupName() string {
+	if strings.TrimSpace(current.WindowsConfigBackupName) != "" {
+		return current.WindowsConfigBackupName
+	}
+	return DefaultWindowsConfigBackupName
+}
+
 // Load 加载配置
 func Load() Config {
 	current = Config{
-		Language:          DefaultLanguage,
-		GamePath:          ToSlashPath(DefaultGamePath),
-		DataPath:          "",
-		SaveGamesPath:     "",
-		WindowsConfigPath: "",
+		Language:                DefaultLanguage,
+		GamePath:                ToSlashPath(DefaultGamePath),
+		DataPath:                "",
+		SaveGamesPath:           "",
+		WindowsConfigPath:       "",
+		DataBackupName:          "",
+		SaveGamesBackupName:     "",
+		WindowsConfigBackupName: "",
 	}
 	if data, err := os.ReadFile(filePath()); err == nil {
 		_ = json.Unmarshal(data, &current)
@@ -145,6 +197,11 @@ func Load() Config {
 	current.DataPath = ToSlashPath(current.DataPath)
 	current.SaveGamesPath = ToSlashPath(current.SaveGamesPath)
 	current.WindowsConfigPath = ToSlashPath(current.WindowsConfigPath)
+
+	// 备份文件名做安全过滤
+	current.DataBackupName = sanitizeFileName(current.DataBackupName)
+	current.SaveGamesBackupName = sanitizeFileName(current.SaveGamesBackupName)
+	current.WindowsConfigBackupName = sanitizeFileName(current.WindowsConfigBackupName)
 
 	// 语言只做非空校验
 	if strings.TrimSpace(current.Language) == "" {
@@ -205,17 +262,38 @@ func SetWindowsConfigPath(p string) {
 	save()
 }
 
+// SetDataBackupName 设置数据备份文件名, 传空字符串恢复默认
+func SetDataBackupName(name string) {
+	current.DataBackupName = sanitizeFileName(name)
+	save()
+}
+
+// SetSaveGamesBackupName 设置存档备份文件名, 传空字符串恢复默认
+func SetSaveGamesBackupName(name string) {
+	current.SaveGamesBackupName = sanitizeFileName(name)
+	save()
+}
+
+// SetWindowsConfigBackupName 设置配置备份文件名, 传空字符串恢复默认
+func SetWindowsConfigBackupName(name string) {
+	current.WindowsConfigBackupName = sanitizeFileName(name)
+	save()
+}
+
 // Reset 恢复全部默认设置
 // Returns:
 //
 //	Config: 新的配置
 func Reset() Config {
 	current = Config{
-		Language:          DefaultLanguage,
-		GamePath:          ToSlashPath(DefaultGamePath),
-		DataPath:          "",
-		SaveGamesPath:     "",
-		WindowsConfigPath: "",
+		Language:                DefaultLanguage,
+		GamePath:                ToSlashPath(DefaultGamePath),
+		DataPath:                "",
+		SaveGamesPath:           "",
+		WindowsConfigPath:       "",
+		DataBackupName:          "",
+		SaveGamesBackupName:     "",
+		WindowsConfigBackupName: "",
 	}
 	save()
 	return current
