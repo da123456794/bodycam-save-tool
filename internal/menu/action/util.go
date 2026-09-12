@@ -106,27 +106,31 @@ func extractZipFile(f *zip.File, dstPath string) error {
 	}
 	// 最后关闭 zip 文件
 	defer rc.Close()
+	// 提取目标路径的目录和文件名
+	dir := filepath.Dir(dstPath)
+	// 提取目标路径的文件名
+	base := filepath.Base(dstPath)
 
-	tmpPath := dstPath + ".tmp"
-	// 备份路径
-	bakPath := dstPath + ".bak"
-
-	// 写临时文件
-	out, err := os.Create(tmpPath)
+	// 临时文件用随机后缀
+	tmpFile, err := os.CreateTemp(dir, base+".*.tmp")
 	if err != nil {
 		return err
 	}
+	// 提取临时文件路径
+	tmpPath := tmpFile.Name()
+	// .bak 直接挂在临时文件名后面, 同样是唯一名字
+	bakPath := tmpPath + ".bak"
 
 	// 复制文件
-	_, err = io.Copy(out, rc)
+	_, err = io.Copy(tmpFile, rc)
 	if err != nil {
-		_ = out.Close()
+		_ = tmpFile.Close()
 		_ = os.Remove(tmpPath)
 		return err
 	}
 
 	// 最后关闭临时文件
-	err = out.Close()
+	err = tmpFile.Close()
 	if err != nil {
 		_ = os.Remove(tmpPath)
 		return err
@@ -134,14 +138,17 @@ func extractZipFile(f *zip.File, dstPath string) error {
 
 	// 判断原文件是否存在
 	hasOld := false
-	if _, statErr := os.Stat(dstPath); statErr == nil {
+	if info, statErr := os.Stat(dstPath); statErr == nil {
+		// 目标是目录, 无法安全覆盖
+		if info.IsDir() {
+			_ = os.Remove(tmpPath)
+			return fmt.Errorf("目标已存在且为目录: %s", dstPath)
+		}
 		hasOld = true
 	}
 
 	// 原文件先挪到 .bak
 	if hasOld {
-		// 清掉可能残留的旧 .bak
-		_ = os.Remove(bakPath)
 		// 复制原文件到 .bak
 		err = os.Rename(dstPath, bakPath)
 		if err != nil {
