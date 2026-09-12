@@ -28,11 +28,7 @@ func safeJoin(root, name string) (string, bool) {
 	target := filepath.Join(root, name)
 	// 检查路径是否越界
 	cleanRoot := filepath.Clean(root)
-	// 检查目标路径是否在根路径下
-	if target != cleanRoot {
-		return "", false
-	}
-	// 检查目标路径是否以根路径开头
+	// 只允许目标在 root 之下, 防止 Zip Slip
 	if target != cleanRoot && !strings.HasPrefix(target, cleanRoot+string(os.PathSeparator)) {
 		return "", false
 	}

@@ -10,7 +10,7 @@ import (
 	"bodycam-save-tool/internal/i18n"
 )
 
-// Backup 把 %LOCALAPPDATA%\Bodycam 全部内容压缩到 exe 同目录
+// Backup 把数据目录全部内容压缩到 exe 同目录
 func Backup() {
 	src := config.DataDir()
 	fi, err := os.Stat(src)
@@ -31,9 +31,10 @@ func Backup() {
 	count := 0
 	// 遍历数据目录下的所有文件
 	err = filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-
+		// 遇到没权限等错误, 跳过但继续
 		if err != nil {
-			return err
+			fmt.Println(i18n.Tf("备份.跳过文件", path, err))
+			return nil
 		}
 		if path == src {
 			return nil

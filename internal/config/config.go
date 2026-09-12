@@ -7,8 +7,11 @@ import (
 	"strings"
 )
 
-// DefaultGamePath 默认游戏本体路径 (正斜杠形式)
+// DefaultGamePath 默认游戏本体路径
 const DefaultGamePath = `D:/SteamLibrary/steamapps/common/bodycam`
+
+// DefaultLanguage 默认语言
+const DefaultLanguage = "zh"
 
 type Config struct {
 	Language string `json:"language"`
@@ -19,6 +22,9 @@ type Config struct {
 var current Config
 
 // ExeDir 返回可执行文件所在目录
+// Returns:
+//
+//	string: 可执行文件所在目录
 func ExeDir() string {
 	exe, err := os.Executable()
 	if err != nil {
@@ -28,12 +34,26 @@ func ExeDir() string {
 	return filepath.Dir(exe)
 }
 
-func filePath() string { return filepath.Join(ExeDir(), "config.json") }
+// filePath 返回配置文件路径
+// Returns:
+//
+//	string: 配置文件路径
+func filePath() string {
+	return filepath.Join(ExeDir(), "config.json")
+}
 
 // ToSlashPath 归一化路径
 //   - 去掉首尾空格
 //   - 去掉首尾英文引号
 //   - 反斜杠统一转换成正斜杠
+//
+// Args:
+//
+//	p: 原始路径
+//
+// Returns:
+//
+//	string: 归一化后的路径
 func ToSlashPath(p string) string {
 	p = strings.TrimSpace(p)
 	p = strings.Trim(p, `"`)
@@ -41,7 +61,10 @@ func ToSlashPath(p string) string {
 	return p
 }
 
-// defaultDataDir 返回系统默认的游戏数据目录
+// defaultDataDir 返回默认的游戏数据目录
+// Returns:
+//
+//	string: 默认的游戏数据目录
 func defaultDataDir() string {
 	base := os.Getenv("LOCALAPPDATA")
 	if base == "" {
@@ -50,14 +73,13 @@ func defaultDataDir() string {
 	return ToSlashPath(filepath.Join(base, "Bodycam"))
 }
 
-// DefaultDataDir 返回系统默认的游戏数据目录, 供界面显示
-func DefaultDataDir() string {
-	return defaultDataDir()
-}
-
 // DataDir 返回游戏数据文件夹路径
-// 若用户自定义过, 返回自定义路径; 否则返回系统默认路径
+// 若用户自定义过, 返回自定义路径; 否则返回默认路径
+// Returns:
+//
+//	string: 游戏数据文件夹路径
 func DataDir() string {
+	// 若用户自定义过, 返回自定义路径
 	if strings.TrimSpace(current.DataPath) != "" {
 		return current.DataPath
 	}
@@ -65,6 +87,9 @@ func DataDir() string {
 }
 
 // GameDir 返回游戏本体路径
+// Returns:
+//
+//	string: 游戏本体路径
 func GameDir() string {
 	return current.GamePath
 }
@@ -72,53 +97,72 @@ func GameDir() string {
 // Load 加载配置
 func Load() Config {
 	current = Config{
-		Language: "zh",
+		// 语言默认值
+		Language: DefaultLanguage,
+		// 游戏本体路径默认值
 		GamePath: ToSlashPath(DefaultGamePath),
+		// 游戏数据文件夹路径默认值
 		DataPath: "",
 	}
 	if data, err := os.ReadFile(filePath()); err == nil {
 		_ = json.Unmarshal(data, &current)
 	}
-	// 归一化从配置读出的路径
+	// 统一路径格式
 	current.GamePath = ToSlashPath(current.GamePath)
 	current.DataPath = ToSlashPath(current.DataPath)
 
-	if current.Language != "zh" && current.Language != "en" {
-		current.Language = "zh"
+	// 语言只做非空校验, 具体是否支持由 i18n 决定
+	if strings.TrimSpace(current.Language) == "" {
+		current.Language = DefaultLanguage
 	}
+	// 游戏本体路径做非空校验
 	if current.GamePath == "" {
 		current.GamePath = ToSlashPath(DefaultGamePath)
 	}
+
 	return current
 }
 
 // Get 返回当前配置
-func Get() Config { return current }
+func Get() Config {
+	return current
+}
 
 // SetLanguage 设置语言
+// Args:
+//
+//	lang: 语言代码
 func SetLanguage(lang string) {
 	current.Language = lang
 	save()
 }
 
 // SetGamePath 设置游戏本体路径
+// Args:
+//
+//	p: 游戏本体路径
 func SetGamePath(p string) {
 	current.GamePath = ToSlashPath(p)
 	save()
 }
 
 // SetDataPath 设置游戏数据文件夹路径
-// 传空字符串表示恢复默认
+// 传空字符串表示恢复默认路径
+// Args:
+//
+//	p: 游戏数据文件夹路径
 func SetDataPath(p string) {
 	current.DataPath = ToSlashPath(p)
 	save()
 }
 
-// Reset 恢复全部默认设置并写回配置
-// Returns: 恢复后的配置
+// Reset 恢复全部默认设置
+// Returns:
+//
+//	Config: 新的配置
 func Reset() Config {
 	current = Config{
-		Language: "zh",
+		Language: DefaultLanguage,
 		GamePath: ToSlashPath(DefaultGamePath),
 		DataPath: "",
 	}
@@ -127,8 +171,10 @@ func Reset() Config {
 }
 
 // save 保存配置
+// Args:
+//
+//	config: 要保存的配置
 func save() {
-	// 序列化配置
 	data, _ := json.MarshalIndent(current, "", "  ")
 	_ = os.WriteFile(filePath(), data, 0644)
 }

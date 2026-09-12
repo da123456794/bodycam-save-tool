@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"bodycam-save-tool/internal/config"
@@ -54,7 +55,7 @@ func Run() {
 			action.Backup()
 			pause()
 		case "2":
-			action.Restore()
+			restoreMenu()
 			pause()
 		case "3":
 			action.OpenGameFolder()
@@ -110,16 +111,14 @@ func settingsMenu() {
 
 // languageMenu 语言设置菜单
 func languageMenu() {
-	currentName := i18n.T("语言菜单.中文名")
-	if config.Get().Language == "en" {
-		currentName = i18n.T("语言菜单.英文名")
-	}
+	langs := i18n.Available()
 
 	fmt.Println()
 	fmt.Println(i18n.T("语言菜单.标题"))
-	fmt.Println(i18n.Tf("语言菜单.当前语言", currentName))
-	fmt.Println(i18n.T("语言菜单.中文"))
-	fmt.Println(i18n.T("语言菜单.英文"))
+	fmt.Println(i18n.Tf("语言菜单.当前语言", i18n.DisplayName(config.Get().Language)))
+	for i, l := range langs {
+		fmt.Printf("%d. %s\n", i+1, i18n.DisplayName(l.Code))
+	}
 	fmt.Println(i18n.T("通用.返回"))
 	fmt.Print(i18n.T("通用.提示"))
 
@@ -127,28 +126,31 @@ func languageMenu() {
 	if !ok {
 		return
 	}
-	switch line {
-	case "1":
-		config.SetLanguage("zh")
-		_ = i18n.Load("zh")
-		fmt.Println(i18n.Tf("语言菜单.已切换", i18n.T("语言菜单.中文名")))
-	case "2":
-		config.SetLanguage("en")
-		_ = i18n.Load("en")
-		fmt.Println(i18n.Tf("语言菜单.已切换", i18n.T("语言菜单.英文名")))
-	case "b", "B":
+	if strings.EqualFold(line, "b") {
 		return
-	default:
-		fmt.Println(i18n.T("通用.无效选项"))
 	}
+
+	// 数字对应语言列表下标
+	idx, err := strconv.Atoi(line)
+	if err != nil || idx < 1 || idx > len(langs) {
+		fmt.Println(i18n.T("通用.无效选项"))
+		return
+	}
+
+	// -1 是为了匹配语言列表的索引
+	code := langs[idx-1].Code
+	// 设置语言
+	config.SetLanguage(code)
+	_ = i18n.Load(code)
+	fmt.Println(i18n.Tf("语言菜单.已切换", i18n.DisplayName(code)))
 }
 
-// promptPath 通用路径输入, 返回用户输入和是否继续
+// promptPath 通用路径输入
 // Args:
 //
 //	titleKey: 标题键
 //	currentKey: 当前路径键
-//	promptKey: 输入示键
+//	promptKey: 输入提示键
 //	current: 当前路径
 //
 // Returns:
@@ -184,17 +186,6 @@ func gamePathMenu() {
 }
 
 // dataPathMenu 游戏数据文件夹路径设置菜单
-// Args:
-//
-//	titleKey: 标题键
-//	currentKey: 当前路径键
-//	promptKey: 输入示键
-//	current: 当前路径
-//
-// Returns:
-//
-//	line: 用户输入的路径
-//	ok: 是否成功读取输入
 func dataPathMenu() {
 	line, ok := promptPath(
 		"数据路径菜单.标题",
@@ -233,12 +224,41 @@ func resetMenu() {
 	// 恢复配置
 	config.Reset()
 
-	// 语言可能变回 zh, 重新加载
+	// 语言可能变回默认, 重新加载
 	_ = i18n.Load(config.Get().Language)
 
 	// 用新语言打印结果
 	fmt.Println(i18n.T("恢复默认菜单.已完成"))
-	fmt.Println(i18n.Tf("恢复默认菜单.当前语言", i18n.T("语言菜单.中文名")))
+	fmt.Println(i18n.Tf("恢复默认菜单.当前语言", i18n.DisplayName(config.Get().Language)))
 	fmt.Println(i18n.Tf("恢复默认菜单.当前游戏路径", config.GameDir()))
 	fmt.Println(i18n.Tf("恢复默认菜单.当前数据路径", config.DataDir()))
+}
+
+// restoreMenu 处理恢复前的冲突询问
+// 先检查是否有冲突, 有冲突则列出全部并询问是否全部覆盖
+func restoreMenu() {
+	hasConflict, conflicts := action.HasConflict()
+	if !hasConflict {
+		action.Restore(false)
+		return
+	}
+
+	// 打印全部冲突文件
+	fmt.Println(i18n.Tf("恢复.发现冲突", len(conflicts)))
+	for _, p := range conflicts {
+		fmt.Println("  " + p)
+	}
+	fmt.Print(i18n.T("恢复.询问覆盖"))
+
+	line, ok := readLine()
+	if !ok {
+		return
+	}
+	if !strings.EqualFold(line, "y") {
+		fmt.Println(i18n.T("恢复.已取消"))
+		return
+	}
+
+	// 给函数确认全部覆盖
+	action.Restore(true)
 }
