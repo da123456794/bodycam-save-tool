@@ -10,6 +10,7 @@ import (
 	"bodycam-save-tool/internal/config"
 	"bodycam-save-tool/internal/i18n"
 	"bodycam-save-tool/internal/menu/action"
+	"bodycam-save-tool/internal/version"
 )
 
 // reader 从标准输入读取输入
@@ -39,6 +40,7 @@ func Run() {
 	for {
 		fmt.Println()
 		fmt.Println(i18n.T("主菜单.标题"))
+		fmt.Println(i18n.Tf("通用.版本", version.Number))
 		fmt.Println(i18n.T("主菜单.备份"))
 		fmt.Println(i18n.T("主菜单.加载"))
 		fmt.Println(i18n.T("主菜单.打开游戏文件夹"))
