@@ -99,6 +99,7 @@
   "备份.压缩失败": "[x] Zip failed: %v",
   "备份.跳过文件": "[!] Skipped %s: %v",
   "备份.跳过汇总": "[!] Skipped %d file(s)/folder(s)",
+  "备份.清理旧备份失败": "[!] Failed to remove old backup %s: %v",
   "备份.完成": "[OK] Backup complete!",
   "备份.来源": "  Source: %s",
   "备份.文件": "  File: %s (%d files)",
