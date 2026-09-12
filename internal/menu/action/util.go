@@ -83,7 +83,6 @@ func addFileToZip(w *zip.Writer, srcPath, relPath string, info os.FileInfo) erro
 }
 
 // extractZipFile 把单个 zip 条目解压到 dstPath
-// 先写到 dstPath + ".tmp", 成功后再重命名覆盖, 避免中途失败留下半个文件
 // Args:
 //
 //	f: zip.File 实例
@@ -107,41 +106,65 @@ func extractZipFile(f *zip.File, dstPath string) error {
 	// 最后关闭 zip 文件
 	defer rc.Close()
 
-	// 写临时文件
 	tmpPath := dstPath + ".tmp"
+	// 备份路径
+	bakPath := dstPath + ".bak"
+
+	// 写临时文件
 	out, err := os.Create(tmpPath)
 	if err != nil {
 		return err
 	}
 
-	// 出错时清理临时文件
-	defer func() {
-		if err != nil {
-			_ = out.Close()
-			_ = os.Remove(tmpPath)
-		}
-	}()
-
 	// 复制文件
-	if _, err = io.Copy(out, rc); err != nil {
-		return err
-	}
-	if err = out.Close(); err != nil {
+	_, err = io.Copy(out, rc)
+	if err != nil {
+		_ = out.Close()
+		_ = os.Remove(tmpPath)
 		return err
 	}
 
-	// 重命名覆盖
-	err = os.Rename(tmpPath, dstPath)
-	if err == nil {
-		return nil
+	// 最后关闭临时文件
+	err = out.Close()
+	if err != nil {
+		_ = os.Remove(tmpPath)
+		return err
 	}
 
-	// Windows 上 rename 不能覆盖已存在的文件, 先删目标再 rename
-	removeErr := os.Remove(dstPath)
-	if removeErr == nil {
-		err = os.Rename(tmpPath, dstPath)
+	// 判断原文件是否存在
+	hasOld := false
+	if _, statErr := os.Stat(dstPath); statErr == nil {
+		hasOld = true
 	}
-	return err
+
+	// 原文件先挪到 .bak
+	if hasOld {
+		// 清掉可能残留的旧 .bak
+		_ = os.Remove(bakPath)
+		// 复制原文件到 .bak
+		err = os.Rename(dstPath, bakPath)
+		if err != nil {
+			_ = os.Remove(tmpPath)
+			return err
+		}
+	}
+
+	// tmp 重命名为目标
+	if err := os.Rename(tmpPath, dstPath); err != nil {
+		// 恢复原文件
+		if hasOld {
+			_ = os.Rename(bakPath, dstPath)
+		}
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	// 成功, 删除 .bak
+	if hasOld {
+		_ = os.Remove(bakPath)
+	}
+
+	return nil
 }
 
 // findConflicts 扫描所有会与目标目录冲突的文件, 返回完整路径列表
