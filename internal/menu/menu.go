@@ -173,7 +173,11 @@ func restoreMenu() {
 
 // runRestore 处理恢复流程: 检查冲突 -> 询问 -> 执行
 func runRestore(zipPath, dst string) {
-	hasConflict, conflicts := action.HasConflict(zipPath, dst)
+	hasConflict, conflicts, err := action.HasConflict(zipPath, dst)
+	if err != nil {
+		fmt.Println(i18n.Tf("恢复.打不开压缩包", zipPath))
+		return
+	}
 	if !hasConflict {
 		action.Restore(zipPath, dst, false)
 		return

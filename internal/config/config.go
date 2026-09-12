@@ -83,14 +83,27 @@ func ToSlashPath(p string) string {
 	return p
 }
 
-// sanitizeFileName 只保留文件名部分, 去掉任何目录分隔
+// sanitizeFileName 只保留文件名部分, 过滤 Windows 非法字符
+// 非法字符: < > : " / \ | ? *
 func sanitizeFileName(name string) string {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return ""
 	}
+	// 去掉任何目录部分
 	name = filepath.Base(name)
-	if name == "." || name == ".." {
+
+	// 过滤 Windows 非法字符
+	invalid := []string{`<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*`}
+	for _, ch := range invalid {
+		name = strings.ReplaceAll(name, ch, "_")
+	}
+
+	// 去掉首尾空格和点 (Windows 不允许文件名以点或空格结尾)
+	name = strings.TrimRight(name, " .")
+	name = strings.TrimSpace(name)
+
+	if name == "" || name == "." || name == ".." {
 		return ""
 	}
 	return name
@@ -177,9 +190,9 @@ func WindowsConfigBackupName() string {
 	return DefaultWindowsConfigBackupName
 }
 
-// Load 加载配置
-func Load() Config {
-	current = Config{
+// defaultConfig 返回一份默认配置
+func defaultConfig() Config {
+	return Config{
 		Language:                DefaultLanguage,
 		GamePath:                ToSlashPath(DefaultGamePath),
 		DataPath:                "",
@@ -189,9 +202,21 @@ func Load() Config {
 		SaveGamesBackupName:     "",
 		WindowsConfigBackupName: "",
 	}
+}
+
+// Load 加载配置
+//   - 文件不存在: 使用默认值
+//   - 文件存在但 JSON 损坏: 重置为默认值 (不覆盖磁盘, 下次保存时自然修复)
+func Load() Config {
+	current = defaultConfig()
+
 	if data, err := os.ReadFile(filePath()); err == nil {
-		_ = json.Unmarshal(data, &current)
+		if err := json.Unmarshal(data, &current); err != nil {
+			// JSON 损坏, 重置为默认值, 避免部分解析残留
+			current = defaultConfig()
+		}
 	}
+
 	// 统一路径格式
 	current.GamePath = ToSlashPath(current.GamePath)
 	current.DataPath = ToSlashPath(current.DataPath)
@@ -285,16 +310,7 @@ func SetWindowsConfigBackupName(name string) {
 //
 //	Config: 新的配置
 func Reset() Config {
-	current = Config{
-		Language:                DefaultLanguage,
-		GamePath:                ToSlashPath(DefaultGamePath),
-		DataPath:                "",
-		SaveGamesPath:           "",
-		WindowsConfigPath:       "",
-		DataBackupName:          "",
-		SaveGamesBackupName:     "",
-		WindowsConfigBackupName: "",
-	}
+	current = defaultConfig()
 	save()
 	return current
 }

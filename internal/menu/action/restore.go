@@ -65,18 +65,18 @@ func Restore(zipPath, dst string, overwrite bool) {
 //
 //	bool: 是否会有文件冲突
 //	[]string: 冲突的文件列表
-func HasConflict(zipPath, dst string) (bool, []string) {
-
+//	error: 打不开 zip 时的错误, 否则为 nil
+func HasConflict(zipPath, dst string) (bool, []string, error) {
 	// 打开 zip 包
 	r, err := zip.OpenReader(zipPath)
 	if err != nil {
-		return false, nil
+		return false, nil, err
 	}
 	defer r.Close()
-
+	// 检查冲突
 	conflicts := findConflicts(dst, r.File)
 	if len(conflicts) == 0 {
-		return false, nil
+		return false, nil, nil
 	}
-	return true, conflicts
+	return true, conflicts, nil
 }
