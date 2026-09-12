@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"bodycam-save-tool/internal/config"
 	"bodycam-save-tool/internal/i18n"
 	"bodycam-save-tool/internal/menu"
@@ -16,7 +19,11 @@ func main() {
 		config.SetLanguage(config.DefaultLanguage)
 	}
 	// 加载语言包
-	_ = i18n.Load(config.Get().Language)
+	if err := i18n.Load(config.Get().Language); err != nil {
+		// 语言文件损坏, 无法继续
+		fmt.Fprintln(os.Stderr, "load language failed:", err)
+		os.Exit(1)
+	}
 	// 运行菜单
 	menu.Run()
 }
