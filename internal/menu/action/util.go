@@ -2,6 +2,7 @@ package action
 
 import (
 	"archive/zip"
+	"bodycam-save-tool/internal/i18n"
 	"io"
 	"os"
 	"path/filepath"
@@ -143,21 +144,36 @@ func findConflicts(root string, files []*zip.File) []string {
 }
 
 // extractAll 把 zip 中所有条目解压到 root, 返回解压的文件数量
-func extractAll(root string, files []*zip.File) int {
+// Args:
+//
+//	root: 根路径
+//	files: zip.File 实例列表
+//
+// Returns:
+//
+//	count: 成功解压的文件数
+//	failed: 失败的文件列表, 每项格式为 "<路径>: <原因>"
+func extractAll(root string, files []*zip.File) (int, []string) {
 	count := 0
+	var failed []string
 	for _, f := range files {
 		target, ok := safeJoin(root, f.Name)
 		if !ok {
+			failed = append(failed, f.Name+": "+i18n.T("恢复.路径越界"))
 			continue
 		}
+		// 如果是目录, 则创建目录
 		if f.FileInfo().IsDir() {
-			_ = os.MkdirAll(target, 0755)
+			if err := os.MkdirAll(target, 0755); err != nil {
+				failed = append(failed, target+": "+err.Error())
+			}
 			continue
 		}
 		if err := extractZipFile(f, target); err != nil {
+			failed = append(failed, target+": "+err.Error())
 			continue
 		}
 		count++
 	}
-	return count
+	return count, failed
 }
